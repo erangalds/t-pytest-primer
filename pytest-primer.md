@@ -1043,6 +1043,26 @@ This setup is incredibly useful for scenarios like:
 
 ##### 6.2.1.1 Setting up different user roles
 
+```python
+import pytest
+
+@pytest.fixture
+def user_session(request):
+    """
+    Fixture to simulate a user session for different roles.
+    The user role (e.g., admin, editor, guest) is determined by the 'user_role'
+    marker on the requesting test.
+    """
+    marker = request.node.get_closest_marker("user_role")
+    # Default to 'guest' if no marker or argument is provided
+    role = marker.args[0] if marker and marker.args else "guest"
+
+    print(f"\n--- Setting up session for user role: {role} ---")
+    # In a real scenario, you might perform login, set up permissions, etc.
+    session = {"user": f"user_{role}", "role": role}
+    yield session  # Provide the session object to the test
+    print(f"--- Tearing down session for user role: {role} ---")
+```
 
 1.  `conftest.py`
 
@@ -1063,6 +1083,34 @@ This file defines a `pytest` fixture named `user_session`. In `pytest`, the�
 In essence, this `conftest.py` defines a flexible `user_session` fixture that can be configured by individual tests to provide different user roles.
 
 2. `test_roles.py`
+
+```python
+import pytest
+
+@pytest.mark.user_role("admin")
+def test_admin_dashboard_access(user_session):
+    """
+    Tests admin dashboard access using an admin user session.
+    """
+    print(f"Test: Accessing dashboard as {user_session['user']} ({user_session['role']})")
+    assert user_session["role"] == "admin"
+
+@pytest.mark.user_role("editor")
+def test_editor_content_creation(user_session):
+    """
+    Tests content creation using an editor user session.
+    """
+    print(f"Test: Creating content as {user_session['user']} ({user_session['role']})")
+    assert user_session["role"] == "editor"
+
+def test_guest_browsing(user_session):
+    """
+    Tests browsing functionality using a guest user session.
+    """
+    print(f"Test: Browsing as {user_session['user']} ({user_session['role']})")
+    assert user_session["role"] == "guest"
+```
+
 
 This file contains the test functions that consume the `user_session` fixture and demonstrate how to influence its behavior using the custom `user_role` marker.
 
@@ -1105,6 +1153,27 @@ This ensures `pytest` knows about your custom marker and can provide better re
 
 1. `conftest.py`
 
+```python
+import pytest
+
+@pytest.fixture
+def db_connection(request):
+    """
+    Fixture to simulate a database connection.
+    The type of database (e.g., postgresql, mysql, sqlite) is determined
+    by the 'db_type' marker on the requesting test.
+    """
+    marker = request.node.get_closest_marker("db_type")
+    # Default to 'sqlite' if no marker or argument is provided
+    db_type = marker.args[0] if marker and marker.args else "sqlite"
+
+    print(f"\n--- Setting up {db_type} database connection ---")
+    # In a real scenario, you would establish a connection here
+    conn = f"Connection_to_{db_type.capitalize()}_DB"
+    yield conn  # Provide the connection object to the test
+    print(f"--- Closing {db_type} database connection ---")
+```
+
 This file defines a `pytest` fixture named `db_connection`. Its purpose is to provide a "database connection" object to tests, where the type of database can be specified by the test itself.
 
 **Key aspects of this `conftest.py`:**
@@ -1120,6 +1189,33 @@ This file defines a `pytest` fixture named `db_connection`. Its purpose is to
     - The code after `yield` simulates tearing down the connection after the test has finished.
 
 2. `test_database.py`
+
+```python
+import pytest
+
+@pytest.mark.db_type("postgresql")
+def test_read_from_postgresql(db_connection):
+    """
+    Tests reading data using a PostgreSQL connection.
+    """
+    print(f"Test: Reading data using {db_connection}")
+    assert "Postgresql" in db_connection
+
+@pytest.mark.db_type("mysql")
+def test_write_to_mysql(db_connection):
+    """
+    Tests writing data using a MySQL connection.
+    """
+    print(f"Test: Writing data using {db_connection}")
+    assert "Mysql" in db_connection
+
+def test_default_db_operation(db_connection):
+    """
+    Tests an operation using the default database connection (sqlite).
+    """
+    print(f"Test: Performing operation using {db_connection}")
+    assert "Sqlite" in db_connection
+```
 
 This file contains the tests that consume the `db_connection` fixture. Each test uses a specific marker (or no marker) to get the exact type of database connection it needs.
 
