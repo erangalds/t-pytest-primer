@@ -695,6 +695,29 @@ def test_login_button_visibility():
 
 We can even apply markers to `classes` and `modules`. This makes easier, because then it gets applied to all tests within them. 
 
+Let me show you an example now. I will be using the same `pytest.ini` file. 
+
+
+```python
+# test_web_ui.py
+import pytest
+
+pytestmark = pytest.mark.ui # Applies 'ui' marker to all tests in this module
+
+@pytest.mark.slow # Can combine with module-level marker
+class TestHomePage:
+    def test_navbar_present(self):
+        assert True
+
+    def test_footer_present(self):
+        assert True
+
+@pytest.mark.database # Overrides module-level marker for this class
+class TestDatabaseInteractions:
+    def test_fetch_records(self):
+        assert True
+```
+
 ## Module 5: Mocking and Patching
 
 ### 5.1 What is Mocking? and Why Mock?
